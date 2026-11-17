@@ -28,11 +28,13 @@ insert into plans (name, duration_months, classes_per_week, monthly_price) value
   ('Trimestral 2x/semana', 3, 2, 350.00),
   ('Semestral 2x/semana', 6, 2, 320.00);
 
--- Despesas recorrentes típicas (editar valores reais)
+-- Despesas recorrentes típicas.
+-- ⚠️ O schema exige amount > 0 — os valores abaixo são EXEMPLOS:
+-- edite aqui antes de rodar, ou ajuste depois na tela Financeiro.
 insert into expenses (description, category, amount, recurring, due_day) values
-  ('Aluguel do estúdio', 'aluguel', 0.00, true, 5),
-  ('Internet', 'internet', 0.00, true, 10),
-  ('Contabilidade', 'contabilidade', 0.00, true, 10),
-  ('Energia elétrica', 'luz', 0.00, true, 15),
-  ('Impostos (DAS)', 'impostos', 0.00, true, 20),
-  ('Celular', 'celular', 0.00, true, 10);
+  ('Aluguel do estúdio', 'aluguel', 2500.00, true, 5),
+  ('Internet', 'internet', 120.00, true, 10),
+  ('Contabilidade', 'contabilidade', 400.00, true, 10),
+  ('Energia elétrica', 'luz', 350.00, true, 15),
+  ('Impostos (DAS)', 'impostos', 300.00, true, 20),
+  ('Celular', 'celular', 80.00, true, 10);
