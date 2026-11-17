@@ -1,6 +1,5 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 import { db } from "./db";
 import { isLockedOut, recordFailure, recordSuccess } from "./ratelimit";
 
@@ -20,12 +19,7 @@ export async function signIn(email: string, password: string) {
   const locked = await isLockedOut(email, ip);
   if (locked) return { error: locked };
 
-  const anon = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  );
-  const { data, error } = await anon.auth.signInWithPassword({ email, password });
+  const { data, error } = await db().auth.signInWithPassword({ email, password });
   if (error || !data.session) {
     await recordFailure(email, ip);
     // Mensagem genérica: não revela se o e-mail existe (OWASP A07)

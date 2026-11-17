@@ -2,12 +2,23 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 let _db: SupabaseClient | null = null;
 
+/**
+ * Normaliza a URL do projeto: remove sufixos colados por engano
+ * (/rest/v1, /auth/v1, barra final). A supabase-js monta os caminhos sozinha.
+ */
+function supabaseUrl(): string {
+  return (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "")
+    .trim()
+    .replace(/\/(rest|auth|storage|realtime)\/v1\/?$/i, "")
+    .replace(/\/+$/, "");
+}
+
 /** Cliente Supabase com service_role — usar SOMENTE no servidor. */
 export function db(): SupabaseClient {
   if (!_db) {
     _db = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      supabaseUrl(),
+      (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").trim(),
       { auth: { persistSession: false } }
     );
   }
