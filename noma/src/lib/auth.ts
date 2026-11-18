@@ -54,20 +54,26 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   const { data, error } = await db().auth.getUser(token);
   if (error || !data.user) return null;
 
-  const { data: profile } = await db()
+  const { data: profile, error: profileError } = await db()
     .from("profiles")
     .select("name, role, active")
     .eq("id", data.user.id)
-    .single();
+    .maybeSingle();
+
+  // Falha transitória ao ler o perfil: NÃO rebaixa o usuário para professor.
+  // Encerra a sessão com segurança para um novo login, em vez de inventar um papel.
+  if (profileError || !profile) return null;
 
   // Usuário desativado pelo dono não entra
-  if (profile && profile.active === false) return null;
+  if (profile.active === false) return null;
 
+  // O papel vem SEMPRE do banco. Nunca há fallback para "professor":
+  // era isso que fazia o dono aparecer como professor "sem motivo".
   return {
     id: data.user.id,
     email: data.user.email ?? "",
-    name: profile?.name ?? data.user.email ?? "Usuário",
-    role: profile?.role ?? "professor",
+    name: profile.name ?? data.user.email ?? "Usuário",
+    role: profile.role === "dono" ? "dono" : "professor",
   };
 }
 

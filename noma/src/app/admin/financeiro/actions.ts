@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 
+/* ---------------- Lançamentos ---------------- */
+
 export async function addPayment(formData: FormData) {
   await requireUser();
   const amount = Number(formData.get("amount"));
@@ -17,6 +19,7 @@ export async function addPayment(formData: FormData) {
     paid_at: String(formData.get("paid_at") || new Date().toISOString().slice(0, 10)),
   });
   revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro/relatorios");
 }
 
 export async function addExpense(formData: FormData) {
@@ -34,14 +37,68 @@ export async function addExpense(formData: FormData) {
     reference_month: `${String(formData.get("reference_month") || new Date().toISOString().slice(0, 7))}-01`,
   });
   revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro/relatorios");
 }
 
 export async function markExpensePaid(formData: FormData) {
   await requireUser();
-  const id = String(formData.get("id"));
   await db()
     .from("expenses")
     .update({ paid_at: new Date().toISOString().slice(0, 10) })
-    .eq("id", id);
+    .eq("id", String(formData.get("id")));
+  revalidatePath("/admin/financeiro");
+}
+
+export async function deleteExpense(formData: FormData) {
+  await requireUser();
+  await db().from("expenses").delete().eq("id", String(formData.get("id")));
+  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro/relatorios");
+}
+
+export async function deletePayment(formData: FormData) {
+  await requireUser();
+  await db().from("payments").delete().eq("id", String(formData.get("id")));
+  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/financeiro/relatorios");
+}
+
+/* ---------------- Categorias customizáveis ---------------- */
+
+function normalizeCat(raw: string): string {
+  return raw.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+export async function addExpenseCategory(formData: FormData) {
+  await requireUser();
+  const name = normalizeCat(String(formData.get("name") ?? ""));
+  if (!name) return;
+  await db().from("expense_categories").upsert({ name, active: true }, { onConflict: "name" });
+  revalidatePath("/admin/financeiro");
+}
+
+export async function toggleExpenseCategory(formData: FormData) {
+  await requireUser();
+  await db()
+    .from("expense_categories")
+    .update({ active: formData.get("active") === "1" })
+    .eq("id", String(formData.get("id")));
+  revalidatePath("/admin/financeiro");
+}
+
+export async function addIncomeCategory(formData: FormData) {
+  await requireUser();
+  const name = normalizeCat(String(formData.get("name") ?? ""));
+  if (!name) return;
+  await db().from("income_categories").upsert({ name, active: true }, { onConflict: "name" });
+  revalidatePath("/admin/financeiro");
+}
+
+export async function toggleIncomeCategory(formData: FormData) {
+  await requireUser();
+  await db()
+    .from("income_categories")
+    .update({ active: formData.get("active") === "1" })
+    .eq("id", String(formData.get("id")));
   revalidatePath("/admin/financeiro");
 }

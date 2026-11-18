@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { requireOwner } from "@/lib/auth";
+import ConfirmButton from "@/components/ConfirmButton";
 import {
   createTeacher,
   setRole,
@@ -69,65 +70,81 @@ export default async function UsuariosPage({
 
       <div className="card">
         <h2>Equipe</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Papel</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {team?.map((p: any) => (
-              <tr key={p.id}>
-                <td>
-                  {p.name}
-                  {p.id === me.id && <span className="muted"> (você)</span>}
-                </td>
-                <td>
-                  <form action={setRole} className="inline">
-                    <input type="hidden" name="id" value={p.id} />
-                    <select name="role" defaultValue={p.role}>
-                      <option value="professor">Professor</option>
-                      <option value="dono">Dono</option>
-                    </select>
-                    <button className="btn-sm btn-outline">Salvar</button>
-                  </form>
-                </td>
-                <td>
-                  {p.active ? (
-                    <span className="badge badge-fixo">Ativo</span>
-                  ) : (
-                    <span className="badge badge-danger">Desativado</span>
-                  )}
-                </td>
-                <td style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  <form action={toggleActive}>
-                    <input type="hidden" name="id" value={p.id} />
-                    <input type="hidden" name="active" value={p.active ? "0" : "1"} />
-                    <button className={p.active ? "btn-sm btn-danger" : "btn-sm"}>
-                      {p.active ? "Desativar" : "Reativar"}
-                    </button>
-                  </form>
-                  <form action={resetPassword} className="inline">
-                    <input type="hidden" name="id" value={p.id} />
-                    <input
-                      name="password"
-                      type="text"
-                      placeholder="Nova senha"
-                      minLength={6}
-                      required
-                      style={{ width: 120 }}
-                    />
-                    <button className="btn-sm btn-outline">Redefinir</button>
-                  </form>
-                </td>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Papel</th>
+                <th>Status</th>
+                <th>Ações</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        <p className="muted">
+            </thead>
+            <tbody>
+              {team?.map((p: any) => (
+                <tr key={p.id}>
+                  <td>
+                    {p.name}
+                    {p.id === me.id && <span className="muted"> (você)</span>}
+                  </td>
+                  <td>
+                    <form action={setRole} className="inline">
+                      <input type="hidden" name="id" value={p.id} />
+                      <select name="role" defaultValue={p.role}>
+                        <option value="professor">Professor</option>
+                        <option value="dono">Dono</option>
+                      </select>
+                      <ConfirmButton
+                        message={`Confirmar alteração de papel de ${p.name}? Isso muda as permissões de acesso.`}
+                        className="btn-sm btn-outline"
+                      >
+                        Salvar
+                      </ConfirmButton>
+                    </form>
+                  </td>
+                  <td>
+                    {p.active ? (
+                      <span className="badge badge-ok">Ativo</span>
+                    ) : (
+                      <span className="badge badge-danger">Desativado</span>
+                    )}
+                  </td>
+                  <td>
+                    <div className="row gap-sm">
+                      <form action={toggleActive}>
+                        <input type="hidden" name="id" value={p.id} />
+                        <input type="hidden" name="active" value={p.active ? "0" : "1"} />
+                        {p.active ? (
+                          <ConfirmButton
+                            message={`Desativar ${p.name}? O login será bloqueado imediatamente.`}
+                            className="btn-sm btn-danger"
+                          >
+                            Desativar
+                          </ConfirmButton>
+                        ) : (
+                          <button type="submit" className="btn-sm">Reativar</button>
+                        )}
+                      </form>
+                      <form action={resetPassword} className="inline">
+                        <input type="hidden" name="id" value={p.id} />
+                        <input
+                          name="password"
+                          type="text"
+                          placeholder="Nova senha"
+                          minLength={6}
+                          required
+                          style={{ width: 120 }}
+                        />
+                        <button type="submit" className="btn-sm btn-outline">Redefinir</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="muted mt">
           Desativar bloqueia o login imediatamente, mas preserva o histórico de aulas do professor.
         </p>
       </div>
@@ -140,42 +157,56 @@ export default async function UsuariosPage({
           gerencia o <b>acesso</b>: gerar novo link (invalida o antigo) ou excluir o aluno do
           sistema.
         </p>
-        <table>
-          <thead>
-            <tr>
-              <th>Aluno</th>
-              <th>Link de acesso</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients?.map((c: any) => (
-              <tr key={c.id}>
-                <td>
-                  {c.name} <span className={`badge badge-${c.status}`}>{c.status}</span>
-                </td>
-                <td>
-                  <code style={{ fontSize: 12 }}>/aluno/{c.access_token}</code>
-                </td>
-                <td style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  <form action={rotateClientToken}>
-                    <input type="hidden" name="id" value={c.id} />
-                    <button className="btn-sm btn-outline">Gerar novo link</button>
-                  </form>
-                  <form action={deleteClientUser}>
-                    <input type="hidden" name="id" value={c.id} />
-                    <button className="btn-sm btn-danger">Excluir aluno</button>
-                  </form>
-                </td>
-              </tr>
-            ))}
-            {!clients?.length && (
+        <div className="table-wrap">
+          <table>
+            <thead>
               <tr>
-                <td colSpan={3} className="muted">Nenhum aluno cadastrado.</td>
+                <th>Aluno</th>
+                <th>Link de acesso</th>
+                <th>Ações</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {clients?.map((c: any) => (
+                <tr key={c.id}>
+                  <td>
+                    {c.name} <span className={`badge badge-${c.status}`}>{c.status}</span>
+                  </td>
+                  <td>
+                    <code className="mono">/aluno/{c.access_token}</code>
+                  </td>
+                  <td>
+                    <div className="row gap-sm">
+                      <form action={rotateClientToken}>
+                        <input type="hidden" name="id" value={c.id} />
+                        <ConfirmButton
+                          message={`Gerar um novo link para ${c.name}? O link atual deixará de funcionar.`}
+                          className="btn-sm btn-outline"
+                        >
+                          Gerar novo link
+                        </ConfirmButton>
+                      </form>
+                      <form action={deleteClientUser}>
+                        <input type="hidden" name="id" value={c.id} />
+                        <ConfirmButton
+                          message={`Excluir ${c.name}? Inscrições, assinaturas e reposições serão removidas. Esta ação não pode ser desfeita.`}
+                          className="btn-sm btn-danger"
+                        >
+                          Excluir aluno
+                        </ConfirmButton>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {!clients?.length && (
+                <tr>
+                  <td colSpan={3} className="muted">Nenhum aluno cadastrado.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   );

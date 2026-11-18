@@ -75,6 +75,7 @@ export default async function ClassDetailPage({
 
       <div className="card">
         <h2>Chamada</h2>
+        <div className="table-wrap">
         <table>
           <thead>
             <tr>
@@ -134,6 +135,7 @@ export default async function ClassDetailPage({
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="grid grid-2">

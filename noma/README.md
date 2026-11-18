@@ -9,6 +9,16 @@ Identidade visual aplicada: vinho `#4d0014`, verde `#0f2d20`, rosa `#be7882`, ro
 - **Professores/donos**: acesso autenticado em `/admin` (instale como app pelo navegador do celular — é um PWA).
 - **Clientes**: acesso por link individual `/aluno/<token>` (sem senha — cada cliente tem um link único, mostrado na tela de Clientes).
 
+### Atualização (nov/2026)
+
+- **Correção de bug**: o dono não é mais rebaixado a "professor" por falhas transitórias de leitura do perfil (o papel agora vem sempre do banco, sem fallback).
+- **Visual** repaginado e **responsivo** (mobile-first): topbar fixa com menu rolável, tabelas com rolagem horizontal, campos sem zoom indesejado no iOS.
+- **Financeiro**: comparação automática com o mês anterior, **categorias customizáveis** de recebimento e despesa (criar/desativar pelo app), e nova página de **Relatórios** (evolução mensal, quebra por categoria, DRE simplificada e impressão/PDF).
+- **Confirmação** em ações sensíveis (mudar papel, desativar usuário, excluir aluno/lançamento).
+- Rodapé com assinatura **Azex Tech**.
+
+> Requer a migration `004_categories.sql` (ver passo 2 abaixo).
+
 ## Regras de negócio implementadas (reunião de nov/2026)
 
 | Regra | Implementação |
@@ -45,7 +55,8 @@ Identidade visual aplicada: vinho `#4d0014`, verde `#0f2d20`, rosa `#be7882`, ro
 ### 1. Supabase
 
 1. Crie um projeto em [supabase.com](https://supabase.com) (free).
-2. No **SQL Editor**, rode, na ordem: `supabase/migrations/001_schema.sql`, `002_users.sql`, `003_security.sql` e `supabase/seed.sql`.
+2. No **SQL Editor**, rode, na ordem: `supabase/migrations/001_schema.sql`, `002_users.sql`, `003_security.sql`, `004_categories.sql` e `supabase/seed.sql`.
+   - Já tem o banco de antes? Rode só a migration nova: `004_categories.sql` (as anteriores não precisam rodar de novo).
 3. Em **Authentication → Users**, crie os 2 usuários dos donos (e-mail + senha).
 4. Ainda no SQL Editor, crie o perfil de cada um (pegue o `id` em Authentication → Users):
 

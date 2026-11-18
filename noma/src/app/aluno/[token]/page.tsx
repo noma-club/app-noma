@@ -1,5 +1,6 @@
 import { db, fmtDate, fmtDateTime, hoursUntil, ENROLL_CANCEL_WINDOW_HOURS } from "@/lib/db";
 import { availableMakeups } from "@/lib/enrollment";
+import AzexFooter from "@/components/AzexFooter";
 import { alunoEnroll, alunoCancel } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ export default async function AlunoPage({
         <div className="tagline">Pilates · Movimento · Conexão</div>
           <p>Link inválido. Fale com o estúdio para receber seu acesso.</p>
         </div>
+        <AzexFooter />
       </div>
     );
   }
@@ -135,6 +137,7 @@ export default async function AlunoPage({
           </div>
         );
       })}
+      <AzexFooter />
     </div>
   );
 }

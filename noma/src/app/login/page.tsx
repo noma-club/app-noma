@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { signIn, getSessionUser } from "@/lib/auth";
+import AzexFooter from "@/components/AzexFooter";
 
 export default async function LoginPage({
   searchParams,
@@ -38,9 +39,10 @@ export default async function LoginPage({
             <label>Senha</label>
             <input name="password" type="password" required autoComplete="current-password" />
           </div>
-          <button style={{ width: "100%" }}>Entrar</button>
+          <button type="submit" className="btn-block">Entrar</button>
         </form>
       </div>
+      <AzexFooter />
     </div>
   );
 }
