@@ -41,10 +41,9 @@ function Icon({ name }: { name: IconName }) {
 }
 
 export default function AdminShell({
-  user, logout, children,
+  user, children,
 }: {
   user: User;
-  logout: () => void;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -121,7 +120,7 @@ export default function AdminShell({
               <b>{user.name}</b>
               <span>{user.role === "dono" ? "Dono" : "Professor"}</span>
             </div>
-            <form action={logout}>
+            <form action="/api/logout" method="post">
               <button type="submit" className="btn-sm btn-logout" title="Sair">
                 <Icon name="logout" />
                 <span className="hide-sm">Sair</span>

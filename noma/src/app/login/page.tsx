@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
-import { signIn, getSessionUser } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 import AzexFooter from "@/components/AzexFooter";
+
+export const dynamic = "force-dynamic";
 
 export default async function LoginPage({
   searchParams,
@@ -10,15 +12,6 @@ export default async function LoginPage({
   const user = await getSessionUser();
   if (user) redirect("/admin");
   const { erro } = await searchParams;
-
-  async function doLogin(formData: FormData) {
-    "use server";
-    const username = String(formData.get("username") ?? "");
-    const password = String(formData.get("password") ?? "");
-    const res = await signIn(username, password);
-    if (res.error) redirect(`/login?erro=${encodeURIComponent(res.error)}`);
-    redirect("/admin");
-  }
 
   return (
     <div className="center-page">
@@ -30,7 +23,7 @@ export default async function LoginPage({
           Acesso de professores e donos
         </p>
         {erro && <div className="msg msg-err">{erro}</div>}
-        <form action={doLogin}>
+        <form action="/api/login" method="post">
           <div className="field">
             <label>Usuário</label>
             <input name="username" required autoComplete="username" autoCapitalize="none" placeholder="seu usuário" />

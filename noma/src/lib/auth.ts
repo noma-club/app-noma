@@ -1,11 +1,11 @@
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "./db";
 import { isLockedOut, recordFailure, recordSuccess } from "./ratelimit";
 import { normalizeUsername } from "./password";
 
-const COOKIE = "noma_session";
-const MAX_AGE = 60 * 60 * 8; // 8h
+export const COOKIE = "noma_session";
+export const MAX_AGE = 60 * 60 * 8; // 8h
 const SECRET = process.env.SESSION_SECRET || "noma-dev-secret-troque-em-producao";
 
 /* =========================================================
@@ -37,7 +37,7 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-async function makeSessionValue(userId: string): Promise<string> {
+export async function makeSessionValue(userId: string): Promise<string> {
   const exp = Date.now() + MAX_AGE * 1000;
   const body = `${userId}.${exp}`;
   const sig = await hmacHex(body);
@@ -56,23 +56,26 @@ async function readSessionUserId(value: string | undefined): Promise<string | nu
   return userId;
 }
 
-async function clientIp(): Promise<string> {
-  const h = await headers();
-  return (h.get("x-forwarded-for") ?? "desconhecido").split(",")[0].trim();
-}
-
 /* =========================================================
    Login por USUÁRIO + SENHA (sem e-mail, sem Supabase Auth)
    ========================================================= */
 
-export async function signIn(username: string, password: string) {
+/**
+ * Verifica usuário+senha (bcrypt no banco) + anti brute force.
+ * NÃO grava cookie aqui — quem grava é o route handler /api/login,
+ * porque definir cookie + redirect dentro de Server Action é
+ * não-confiável no OpenNext/Cloudflare (o Set-Cookie se perde).
+ */
+export async function verifyLogin(
+  username: string,
+  password: string,
+  ip: string
+): Promise<{ userId?: string; error?: string }> {
   const user = normalizeUsername(username);
-  const ip = await clientIp();
 
   const locked = await isLockedOut(user, ip);
   if (locked) return { error: locked };
 
-  // Verificação da senha (bcrypt) roda no banco
   const { data, error } = await db().rpc("verify_app_user", {
     p_username: user,
     p_password: password,
@@ -85,20 +88,7 @@ export async function signIn(username: string, password: string) {
   }
 
   await recordSuccess(user);
-  const jar = await cookies();
-  jar.set(COOKIE, await makeSessionValue(row.id), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: MAX_AGE,
-    path: "/",
-  });
-  return { error: null };
-}
-
-export async function signOut() {
-  const jar = await cookies();
-  jar.delete(COOKIE);
+  return { userId: row.id };
 }
 
 export type SessionUser = { id: string; username: string; name: string; role: string };
