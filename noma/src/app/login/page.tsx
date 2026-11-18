@@ -13,9 +13,9 @@ export default async function LoginPage({
 
   async function doLogin(formData: FormData) {
     "use server";
-    const email = String(formData.get("email") ?? "");
+    const username = String(formData.get("username") ?? "");
     const password = String(formData.get("password") ?? "");
-    const res = await signIn(email, password);
+    const res = await signIn(username, password);
     if (res.error) redirect(`/login?erro=${encodeURIComponent(res.error)}`);
     redirect("/admin");
   }
@@ -32,8 +32,8 @@ export default async function LoginPage({
         {erro && <div className="msg msg-err">{erro}</div>}
         <form action={doLogin}>
           <div className="field">
-            <label>E-mail</label>
-            <input name="email" type="email" required autoComplete="email" />
+            <label>Usuário</label>
+            <input name="username" required autoComplete="username" autoCapitalize="none" placeholder="seu usuário" />
           </div>
           <div className="field">
             <label>Senha</label>

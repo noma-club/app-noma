@@ -29,6 +29,7 @@
   --danger: #a8323a;
   --danger-dark: #7f2228;
   --success: #1f7a53;
+  --warn: #b7791f;
 
   --radius: 18px;
   --radius-sm: 11px;
@@ -51,6 +52,7 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  overflow-x: hidden; /* trava de segurança contra rolagem lateral */
 }
 
 h1, h2, h3, .brand, .logo, .appbar-title, .sb-brand { font-family: var(--font-display); }
@@ -66,15 +68,15 @@ a:hover { text-decoration: underline; }
 .sidebar {
   width: var(--sidebar-w);
   flex-shrink: 0;
-  background: linear-gradient(185deg, var(--green-2) 0%, var(--green) 45%, var(--green-deep) 100%);
-  color: #f3e7e6;
+  background: linear-gradient(185deg, var(--wine-2) 0%, var(--wine) 42%, var(--wine-dark) 100%);
+  color: #f6e7ea;
   position: fixed;
   top: 0; left: 0; bottom: 0;
   z-index: 60;
   display: flex;
   flex-direction: column;
   transition: width 0.22s ease, transform 0.25s ease;
-  box-shadow: 2px 0 24px rgba(10, 32, 22, 0.18);
+  box-shadow: 2px 0 24px rgba(54, 0, 14, 0.2);
   overflow: hidden;
 }
 
@@ -104,17 +106,22 @@ a:hover { text-decoration: underline; }
   gap: 13px;
   padding: 11px 13px;
   border-radius: 12px;
-  color: rgba(255, 216, 217, 0.82);
+  color: rgba(246, 231, 234, 0.8);
   font-size: 14.5px;
   font-weight: 500;
   white-space: nowrap;
+  position: relative;
   transition: background 0.15s, color 0.15s;
 }
-.sb-link:hover { background: rgba(255, 255, 255, 0.08); color: #fff; text-decoration: none; }
+.sb-link:hover { background: rgba(255, 255, 255, 0.09); color: #fff; text-decoration: none; }
 .sb-link.active {
-  background: linear-gradient(100deg, var(--wine) 0%, var(--wine-2) 100%);
+  background: rgba(255, 255, 255, 0.14);
   color: #fff;
-  box-shadow: 0 6px 16px rgba(77, 0, 20, 0.35);
+}
+/* toque de verde nos detalhes: barra do item ativo */
+.sb-link.active::before {
+  content: ""; position: absolute; left: 4px; top: 9px; bottom: 9px; width: 3px;
+  border-radius: 999px; background: linear-gradient(180deg, #4ca87a, var(--green));
 }
 .sb-link.active .sb-ico { color: var(--blush); }
 .sb-ico { display: inline-flex; flex-shrink: 0; }
@@ -177,8 +184,8 @@ a:hover { text-decoration: underline; }
 .appbar-user .whoami { text-align: right; line-height: 1.25; }
 .appbar-user .whoami b { display: block; font-size: 13.5px; font-weight: 600; }
 .appbar-user .whoami span { font-size: 11px; color: var(--muted); }
-.btn-logout { background: var(--green); color: #fff; }
-.btn-logout:hover { background: var(--green-deep); }
+.btn-logout { background: transparent; color: var(--wine); border: 1px solid var(--line-2); }
+.btn-logout:hover { background: var(--blush-2); border-color: var(--rose); }
 
 .hamb {
   display: none;
@@ -200,14 +207,14 @@ a:hover { text-decoration: underline; }
   }
   .sidebar.collapsed { width: var(--sidebar-w); }           /* ignora rail no mobile */
   .sidebar.collapsed .sb-label { display: inline; }
-  .sidebar.mobile-open { transform: translateX(0); box-shadow: 2px 0 40px rgba(10, 32, 22, 0.4); }
+  .sidebar.mobile-open { transform: translateX(0); box-shadow: 2px 0 40px rgba(54, 0, 14, 0.4); }
   .app-main, .sidebar.collapsed ~ .app-main { margin-left: 0; }
   .sb-foot .sb-collapse { display: none; }                  /* recolher não faz sentido no drawer */
   .hamb { display: inline-flex; }
   .sidebar-overlay.show {
     display: block;
     position: fixed; inset: 0;
-    background: rgba(10, 32, 22, 0.45);
+    background: rgba(54, 0, 14, 0.4);
     z-index: 55;
   }
 }
@@ -251,6 +258,7 @@ a:hover { text-decoration: underline; }
 .card-head h2 { margin: 0; }
 
 .grid { display: grid; gap: 18px; }
+.grid > * { min-width: 0; } /* deixa os filhos encolherem em vez de vazar */
 @media (min-width: 720px) {
   .grid-2 { grid-template-columns: 1fr 1fr; }
   .grid-3 { grid-template-columns: repeat(3, 1fr); }
@@ -258,6 +266,19 @@ a:hover { text-decoration: underline; }
 }
 @media (max-width: 719px) {
   .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+}
+
+/* Container queries: grades internas colapsam conforme a LARGURA REAL do
+   card (resolve o overflow do financeiro quando as colunas ficam estreitas). */
+.card { container-type: inline-size; }
+@container (max-width: 460px) {
+  .card .grid-2,
+  .card .grid-3,
+  .card .grid-4 { grid-template-columns: 1fr; }
+}
+@container (max-width: 680px) {
+  .card .grid-3,
+  .card .grid-4 { grid-template-columns: 1fr 1fr; }
 }
 
 /* ---------- Tabelas ---------- */
@@ -422,6 +443,47 @@ button:active, .btn:active { transform: translateY(1px); }
 }
 .class-item .info { flex: 1; min-width: 0; }
 .class-item .t { font-weight: 600; }
+
+/* ---------- Agenda / calendário semanal ---------- */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(150px, 1fr));
+  gap: 10px;
+}
+.cal-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+.cal-day {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 120px;
+}
+.cal-day.today { border-color: var(--rose); box-shadow: 0 0 0 2px rgba(190, 120, 130, 0.25); }
+.cal-dayhead { text-align: center; padding: 4px 0 6px; border-bottom: 1px solid var(--line); }
+.cal-dayhead .dow { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--rose-dark); font-weight: 700; }
+.cal-dayhead .dnum { font-family: var(--font-display); font-size: 20px; color: var(--wine); line-height: 1.1; }
+.cal-day.today .cal-dayhead .dnum { color: var(--rose-dark); }
+.cal-event {
+  display: block;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--wine);
+  border-radius: 9px;
+  padding: 7px 9px;
+  font-size: 12px;
+  transition: box-shadow 0.12s, transform 0.05s;
+}
+.cal-event:hover { box-shadow: var(--shadow-sm); text-decoration: none; transform: translateY(-1px); }
+.cal-event .ev-time { font-weight: 700; color: var(--wine); }
+.cal-event .ev-name { font-weight: 600; color: var(--text); }
+.cal-event .ev-meta { color: var(--muted); font-size: 11px; }
+.cal-event .ev-full { border-left-color: var(--danger); }
+.cal-event.full { border-left-color: var(--danger); opacity: 0.92; }
+.cal-event.okvagas { border-left-color: var(--green); }
+.cal-empty { color: var(--muted); font-size: 11px; text-align: center; padding: 10px 0; }
 
 /* ---------- Rodapé Azex ---------- */
 .azex { text-align: center; padding: 24px 16px 30px; font-size: 12px; color: var(--muted); }

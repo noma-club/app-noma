@@ -9,15 +9,19 @@ Identidade visual aplicada: vinho `#4d0014`, verde `#0f2d20`, rosa `#be7882`, ro
 - **Professores/donos**: acesso autenticado em `/admin` (instale como app pelo navegador do celular — é um PWA).
 - **Clientes**: acesso por link individual `/aluno/<token>` (sem senha — cada cliente tem um link único, mostrado na tela de Clientes).
 
-### Atualização (nov/2026)
+### Atualização 2 (nov/2026)
 
-- **Correção de bug**: o dono não é mais rebaixado a "professor" por falhas transitórias de leitura do perfil (o papel agora vem sempre do banco, sem fallback).
-- **Visual** repaginado e **responsivo** (mobile-first): topbar fixa com menu rolável, tabelas com rolagem horizontal, campos sem zoom indesejado no iOS.
-- **Financeiro**: comparação automática com o mês anterior, **categorias customizáveis** de recebimento e despesa (criar/desativar pelo app), e nova página de **Relatórios** (evolução mensal, quebra por categoria, DRE simplificada e impressão/PDF).
-- **Confirmação** em ações sensíveis (mudar papel, desativar usuário, excluir aluno/lançamento).
-- Rodapé com assinatura **Azex Tech**.
+- **Login por usuário + senha** (sem e-mail e sem Supabase Auth). Resolve o erro "This endpoint requires a valid Bearer token" ao criar usuários e acaba com o **logout aleatório** ao navegar (a sessão agora é um cookie assinado, validado localmente — sem chamada de rede por página).
+- **Senha forte** obrigatória: mínimo 8 caracteres, com maiúscula, minúscula e caractere especial.
+- **Sidebar retrátil em vinho** (cor primária da marca); o **verde agora é só detalhe** (acento do item ativo, bordas de vaga, valores positivos).
+- **Agenda em formato de calendário semanal** (colunas por dia, blocos de aula, hoje destacado).
+- **Financeiro**: corrigido o **overflow horizontal**/aperto das colunas (container queries); cards com acento de cor.
 
-> Requer a migration `004_categories.sql` (ver passo 2 abaixo).
+### Atualização 1 (nov/2026)
+
+- Visual repaginado e responsivo; **categorias customizáveis**; página de **Relatórios** (evolução, quebra por categoria, DRE, impressão/PDF); **confirmação** em ações sensíveis; rodapé **Azex Tech**.
+
+> Requer rodar as migrations `004_categories.sql` e `005_auth.sql` (ver passo 2 abaixo).
 
 ## Regras de negócio implementadas (reunião de nov/2026)
 
@@ -55,16 +59,12 @@ Identidade visual aplicada: vinho `#4d0014`, verde `#0f2d20`, rosa `#be7882`, ro
 ### 1. Supabase
 
 1. Crie um projeto em [supabase.com](https://supabase.com) (free).
-2. No **SQL Editor**, rode, na ordem: `supabase/migrations/001_schema.sql`, `002_users.sql`, `003_security.sql`, `004_categories.sql` e `supabase/seed.sql`.
-   - Já tem o banco de antes? Rode só a migration nova: `004_categories.sql` (as anteriores não precisam rodar de novo).
-3. Em **Authentication → Users**, crie os 2 usuários dos donos (e-mail + senha).
-4. Ainda no SQL Editor, crie o perfil de cada um (pegue o `id` em Authentication → Users):
-
-```sql
-insert into profiles (id, name, role) values
-  ('UUID-DO-USUARIO-1', 'Nome Dono 1', 'dono'),
-  ('UUID-DO-USUARIO-2', 'Nome Dono 2', 'dono');
-```
+2. No **SQL Editor**, rode, na ordem: `supabase/migrations/001_schema.sql`, `002_users.sql`, `003_security.sql`, `004_categories.sql`, `005_auth.sql` e `supabase/seed.sql`.
+   - Já tem o banco de antes? Rode só as migrations novas: `004_categories.sql` e `005_auth.sql`.
+3. **Login inicial** (criado pela migration `005_auth.sql`):
+   - Usuário: `admin` · Senha: `Noma@2026`
+   - **Troque a senha no primeiro acesso** (aba Usuários → Redefinir) e crie os demais acessos por lá.
+   - Não há e-mail: o login é 100% por **usuário + senha** (geridos no próprio app).
 
 ### 2. App local
 

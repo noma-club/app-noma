@@ -2,37 +2,95 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "./db";
 import { isLockedOut, recordFailure, recordSuccess } from "./ratelimit";
+import { normalizeUsername } from "./password";
 
 const COOKIE = "noma_session";
+const MAX_AGE = 60 * 60 * 8; // 8h
+const SECRET = process.env.SESSION_SECRET || "noma-dev-secret-troque-em-producao";
+
+/* =========================================================
+   Sessão: cookie assinado com HMAC-SHA256 (validação local,
+   sem chamada de rede por requisição).
+   Formato do valor: "<userId>.<expiraEmMs>.<assinaturaHex>"
+   ========================================================= */
+
+async function hmacHex(data: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(SECRET),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(data));
+  let hex = "";
+  for (const b of new Uint8Array(sig)) hex += b.toString(16).padStart(2, "0");
+  return hex;
+}
+
+/** Comparação de tempo constante (evita timing attacks na assinatura). */
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+async function makeSessionValue(userId: string): Promise<string> {
+  const exp = Date.now() + MAX_AGE * 1000;
+  const body = `${userId}.${exp}`;
+  const sig = await hmacHex(body);
+  return `${body}.${sig}`;
+}
+
+async function readSessionUserId(value: string | undefined): Promise<string | null> {
+  if (!value) return null;
+  const parts = value.split(".");
+  if (parts.length !== 3) return null;
+  const [userId, expStr, sig] = parts;
+  const exp = Number(expStr);
+  if (!userId || !exp || Date.now() > exp) return null;
+  const expected = await hmacHex(`${userId}.${expStr}`);
+  if (!safeEqual(sig, expected)) return null;
+  return userId;
+}
 
 async function clientIp(): Promise<string> {
   const h = await headers();
   return (h.get("x-forwarded-for") ?? "desconhecido").split(",")[0].trim();
 }
 
-/** Autentica via Supabase Auth e grava o access_token em cookie httpOnly. */
-export async function signIn(email: string, password: string) {
-  email = email.trim().toLowerCase();
+/* =========================================================
+   Login por USUÁRIO + SENHA (sem e-mail, sem Supabase Auth)
+   ========================================================= */
+
+export async function signIn(username: string, password: string) {
+  const user = normalizeUsername(username);
   const ip = await clientIp();
 
-  // Anti brute force: lockout por e-mail e por IP
-  const locked = await isLockedOut(email, ip);
+  const locked = await isLockedOut(user, ip);
   if (locked) return { error: locked };
 
-  const { data, error } = await db().auth.signInWithPassword({ email, password });
-  if (error || !data.session) {
-    await recordFailure(email, ip);
-    // Mensagem genérica: não revela se o e-mail existe (OWASP A07)
-    return { error: "E-mail ou senha inválidos." };
-  }
-  await recordSuccess(email);
+  // Verificação da senha (bcrypt) roda no banco
+  const { data, error } = await db().rpc("verify_app_user", {
+    p_username: user,
+    p_password: password,
+  });
+  const row = Array.isArray(data) ? data[0] : data;
 
+  if (error || !row) {
+    await recordFailure(user, ip);
+    return { error: "Usuário ou senha inválidos." };
+  }
+
+  await recordSuccess(user);
   const jar = await cookies();
-  jar.set(COOKIE, data.session.access_token, {
+  jar.set(COOKIE, await makeSessionValue(row.id), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 8, // 8h
+    maxAge: MAX_AGE,
     path: "/",
   });
   return { error: null };
@@ -43,48 +101,36 @@ export async function signOut() {
   jar.delete(COOKIE);
 }
 
-export type SessionUser = { id: string; email: string; name: string; role: string };
+export type SessionUser = { id: string; username: string; name: string; role: string };
 
-/** Retorna o usuário logado (dono/professor) ou null. */
+/** Usuário logado, validado localmente + 1 leitura de perfil (confiável). */
 export async function getSessionUser(): Promise<SessionUser | null> {
   const jar = await cookies();
-  const token = jar.get(COOKIE)?.value;
-  if (!token) return null;
+  const userId = await readSessionUserId(jar.get(COOKIE)?.value);
+  if (!userId) return null;
 
-  const { data, error } = await db().auth.getUser(token);
-  if (error || !data.user) return null;
-
-  const { data: profile, error: profileError } = await db()
+  const { data: profile, error } = await db()
     .from("profiles")
-    .select("name, role, active")
-    .eq("id", data.user.id)
+    .select("name, role, active, username")
+    .eq("id", userId)
     .maybeSingle();
 
-  // Falha transitória ao ler o perfil: NÃO rebaixa o usuário para professor.
-  // Encerra a sessão com segurança para um novo login, em vez de inventar um papel.
-  if (profileError || !profile) return null;
+  if (error || !profile || profile.active === false) return null;
 
-  // Usuário desativado pelo dono não entra
-  if (profile.active === false) return null;
-
-  // O papel vem SEMPRE do banco. Nunca há fallback para "professor":
-  // era isso que fazia o dono aparecer como professor "sem motivo".
   return {
-    id: data.user.id,
-    email: data.user.email ?? "",
-    name: profile.name ?? data.user.email ?? "Usuário",
+    id: userId,
+    username: profile.username ?? "",
+    name: profile.name ?? "Usuário",
     role: profile.role === "dono" ? "dono" : "professor",
   };
 }
 
-/** Guard das páginas admin: redireciona pro login se não autenticado. */
 export async function requireUser(): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   return user;
 }
 
-/** Guard de páginas exclusivas de dono (ex.: gerenciamento de usuários). */
 export async function requireOwner(): Promise<SessionUser> {
   const user = await requireUser();
   if (user.role !== "dono") redirect("/admin");

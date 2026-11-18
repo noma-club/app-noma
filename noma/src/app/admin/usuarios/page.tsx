@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
 import { requireOwner } from "@/lib/auth";
+import { PASSWORD_HINT } from "@/lib/password";
 import ConfirmButton from "@/components/ConfirmButton";
 import {
-  createTeacher,
+  createUser,
   setRole,
   toggleActive,
   resetPassword,
@@ -22,7 +23,7 @@ export default async function UsuariosPage({
 
   const { data: team } = await db()
     .from("profiles")
-    .select("id, name, role, active, created_at")
+    .select("id, name, role, active, username, created_at")
     .order("role")
     .order("name");
 
@@ -40,20 +41,20 @@ export default async function UsuariosPage({
       <div className="card">
         <h2>Novo professor / dono</h2>
         <p className="muted">
-          Cria o acesso de login no app. A senha pode ser trocada depois pelo próprio dono.
+          Acesso por <b>usuário e senha</b> — sem e-mail. {PASSWORD_HINT}
         </p>
-        <form action={createTeacher} className="grid grid-3">
+        <form action={createUser} className="grid grid-4">
           <div className="field">
             <label>Nome *</label>
             <input name="name" required />
           </div>
           <div className="field">
-            <label>E-mail (login) *</label>
-            <input name="email" type="email" required />
+            <label>Usuário (login) *</label>
+            <input name="username" required placeholder="ex.: marina" autoCapitalize="none" />
           </div>
           <div className="field">
-            <label>Senha inicial * (mín. 6)</label>
-            <input name="password" type="text" minLength={6} required />
+            <label>Senha inicial *</label>
+            <input name="password" type="text" required placeholder="Ex.: Noma@2026" />
           </div>
           <div className="field">
             <label>Papel</label>
@@ -63,7 +64,7 @@ export default async function UsuariosPage({
             </select>
           </div>
           <div className="field" style={{ alignSelf: "end" }}>
-            <button>Criar acesso</button>
+            <button type="submit" className="btn-block">Criar acesso</button>
           </div>
         </form>
       </div>
@@ -75,6 +76,7 @@ export default async function UsuariosPage({
             <thead>
               <tr>
                 <th>Nome</th>
+                <th>Usuário</th>
                 <th>Papel</th>
                 <th>Status</th>
                 <th>Ações</th>
@@ -86,6 +88,11 @@ export default async function UsuariosPage({
                   <td>
                     {p.name}
                     {p.id === me.id && <span className="muted"> (você)</span>}
+                  </td>
+                  <td>
+                    {p.username
+                      ? <code className="mono">{p.username}</code>
+                      : <span className="muted">— sem login</span>}
                   </td>
                   <td>
                     <form action={setRole} className="inline">
@@ -130,10 +137,10 @@ export default async function UsuariosPage({
                         <input
                           name="password"
                           type="text"
-                          placeholder="Nova senha"
-                          minLength={6}
+                          placeholder="Nova senha forte"
                           required
-                          style={{ width: 120 }}
+                          style={{ width: 150 }}
+                          title="Mín. 8, com maiúscula, minúscula e caractere especial"
                         />
                         <button type="submit" className="btn-sm btn-outline">Redefinir</button>
                       </form>

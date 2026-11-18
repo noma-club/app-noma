@@ -96,21 +96,21 @@ export default async function FinanceiroPage({
 
       {/* Indicadores com comparação vs mês anterior */}
       <div className="grid grid-4" style={{ marginBottom: 16 }}>
-        <div className="card stat">
+        <div className="card stat green">
           <div className="n" style={{ color: "var(--success)" }}>{brl(totalIn)}</div>
           <div className="l">Recebido</div>
           <DeltaInline cur={totalIn} prev={pIn} prevLabel={prevLabel} />
         </div>
-        <div className="card stat">
+        <div className="card stat wine">
           <div className="n" style={{ color: "var(--danger)" }}>{brl(totalOut)}</div>
           <div className="l">Despesas pagas</div>
           <DeltaInline cur={totalOut} prev={pOut} prevLabel={prevLabel} invert />
         </div>
-        <div className="card stat">
+        <div className="card stat gold">
           <div className="n" style={{ color: "var(--warn)" }}>{brl(totalPending)}</div>
           <div className="l">A pagar no mês</div>
         </div>
-        <div className="card stat">
+        <div className={`card stat ${saldo >= 0 ? "green" : "wine"}`}>
           <div className="n" style={{ color: saldo >= 0 ? "var(--success)" : "var(--danger)" }}>
             {brl(saldo)}
           </div>
