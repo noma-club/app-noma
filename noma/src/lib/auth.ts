@@ -6,7 +6,19 @@ import { normalizeUsername } from "./password";
 
 export const COOKIE = "noma_session";
 export const MAX_AGE = 60 * 60 * 8; // 8h
-const SECRET = process.env.SESSION_SECRET || "noma-dev-secret-troque-em-producao";
+
+/**
+ * IMPORTANTE (OpenNext/Cloudflare): variáveis de ambiente e secrets são
+ * resolvidas POR REQUISIÇÃO, não no carregamento do módulo. Ler
+ * `process.env.SESSION_SECRET` no topo do arquivo congela o valor errado
+ * (normalmente o fallback de dev), e aí a assinatura do cookie feita no
+ * login não bate na verificação da próxima requisição -> sessão "cai"
+ * logo após entrar. Por isso o segredo é lido SEMPRE dentro da função,
+ * em tempo de requisição.
+ */
+function sessionSecret(): string {
+  return process.env.SESSION_SECRET || "noma-dev-secret-troque-em-producao";
+}
 
 /* =========================================================
    Sessão: cookie assinado com HMAC-SHA256 (validação local,
@@ -18,7 +30,7 @@ async function hmacHex(data: string): Promise<string> {
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",
-    enc.encode(SECRET),
+    enc.encode(sessionSecret()),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"]

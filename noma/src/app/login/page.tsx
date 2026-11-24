@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import AzexFooter from "@/components/AzexFooter";
+import PasswordField from "@/components/PasswordField";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export default async function LoginPage({
           </div>
           <div className="field">
             <label>Senha</label>
-            <input name="password" type="password" required autoComplete="current-password" />
+            <PasswordField name="password" autoComplete="current-password" />
           </div>
           <button type="submit" className="btn-block">Entrar</button>
         </form>
