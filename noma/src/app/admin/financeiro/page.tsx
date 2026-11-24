@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db, fmtDate, brl } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireOwner } from "@/lib/auth";
 import {
   currentMonth,
   addMonths,
@@ -34,7 +34,7 @@ export default async function FinanceiroPage({
 }: {
   searchParams: Promise<{ mes?: string }>;
 }) {
-  await requireUser();
+  await requireOwner();
   const { mes } = await searchParams;
   const month = mes ?? currentMonth();
   const prev = addMonths(month, -1);

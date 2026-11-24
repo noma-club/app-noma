@@ -2,12 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireOwner } from "@/lib/auth";
 
 /* ---------------- Lançamentos ---------------- */
 
 export async function addPayment(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   const amount = Number(formData.get("amount"));
   if (!amount || amount <= 0) return;
   await db().from("payments").insert({
@@ -23,7 +23,7 @@ export async function addPayment(formData: FormData) {
 }
 
 export async function addExpense(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   const amount = Number(formData.get("amount"));
   if (!amount || amount <= 0) return;
   const recurring = formData.get("recurring") === "on";
@@ -41,7 +41,7 @@ export async function addExpense(formData: FormData) {
 }
 
 export async function markExpensePaid(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   await db()
     .from("expenses")
     .update({ paid_at: new Date().toISOString().slice(0, 10) })
@@ -50,14 +50,14 @@ export async function markExpensePaid(formData: FormData) {
 }
 
 export async function deleteExpense(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   await db().from("expenses").delete().eq("id", String(formData.get("id")));
   revalidatePath("/admin/financeiro");
   revalidatePath("/admin/financeiro/relatorios");
 }
 
 export async function deletePayment(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   await db().from("payments").delete().eq("id", String(formData.get("id")));
   revalidatePath("/admin/financeiro");
   revalidatePath("/admin/financeiro/relatorios");
@@ -70,7 +70,7 @@ function normalizeCat(raw: string): string {
 }
 
 export async function addExpenseCategory(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   const name = normalizeCat(String(formData.get("name") ?? ""));
   if (!name) return;
   await db().from("expense_categories").upsert({ name, active: true }, { onConflict: "name" });
@@ -78,7 +78,7 @@ export async function addExpenseCategory(formData: FormData) {
 }
 
 export async function toggleExpenseCategory(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   await db()
     .from("expense_categories")
     .update({ active: formData.get("active") === "1" })
@@ -87,7 +87,7 @@ export async function toggleExpenseCategory(formData: FormData) {
 }
 
 export async function addIncomeCategory(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   const name = normalizeCat(String(formData.get("name") ?? ""));
   if (!name) return;
   await db().from("income_categories").upsert({ name, active: true }, { onConflict: "name" });
@@ -95,7 +95,7 @@ export async function addIncomeCategory(formData: FormData) {
 }
 
 export async function toggleIncomeCategory(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   await db()
     .from("income_categories")
     .update({ active: formData.get("active") === "1" })

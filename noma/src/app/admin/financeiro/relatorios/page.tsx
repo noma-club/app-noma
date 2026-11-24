@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db, brl } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireOwner } from "@/lib/auth";
 import { currentMonth, addMonths, monthBounds, monthLabel, monthLabelLong } from "@/lib/finance";
 import PrintButton from "@/components/PrintButton";
 
@@ -13,7 +13,7 @@ export default async function RelatoriosPage({
 }: {
   searchParams: Promise<{ meses?: string; ate?: string }>;
 }) {
-  await requireUser();
+  await requireOwner();
   const { meses, ate } = await searchParams;
   const nMonths = RANGES.includes(Number(meses)) ? Number(meses) : 6;
   const endMonth = ate ?? currentMonth();

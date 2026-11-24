@@ -14,6 +14,7 @@ export default async function AgendaPage({
   searchParams: Promise<{ semana?: string }>;
 }) {
   const user = await requireUser();
+  const isOwner = user.role === "dono";
   const { semana } = await searchParams;
 
   // Semana começando na segunda (âncora ao meio-dia UTC = mesma data local, BR sem DST)
@@ -61,7 +62,8 @@ export default async function AgendaPage({
 
   return (
     <>
-      {/* ---------------- Nova aula ---------------- */}
+      {/* ---------------- Nova aula (somente dono) ---------------- */}
+      {isOwner && (
       <div className="card">
         <h2>Nova aula</h2>
         <form action={createClass} className="grid grid-3">
@@ -110,6 +112,7 @@ export default async function AgendaPage({
           podem ser preenchidas pelo link do aluno.
         </p>
       </div>
+      )}
 
       {/* ---------------- Calendário semanal ---------------- */}
       <div className="card">
@@ -182,10 +185,12 @@ export default async function AgendaPage({
                       <td>{c.class_types?.name}</td>
                       <td>{c.spaces?.name}</td>
                       <td className="num">
+                        {isOwner && (
                         <form action={deleteClass}>
                           <input type="hidden" name="id" value={c.id} />
                           <ConfirmButton message="Excluir esta aula?" className="btn-sm btn-ghost">✕</ConfirmButton>
                         </form>
+                        )}
                       </td>
                     </tr>
                   );

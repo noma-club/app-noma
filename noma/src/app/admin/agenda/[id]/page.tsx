@@ -9,7 +9,8 @@ export default async function ClassDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const me = await requireUser();
+  const isOwner = me.role === "dono";
   const { id } = await params;
 
   const { data: klass } = await db()
@@ -60,6 +61,7 @@ export default async function ClassDetailPage({
           {k.released_spots} vagas liberadas online
         </p>
 
+        {isOwner && (<>
         <h3>Inscrever cliente (admin ignora a regra das 6h)</h3>
         <form action={adminEnroll} className="inline">
           <input type="hidden" name="class_id" value={id} />
@@ -71,6 +73,7 @@ export default async function ClassDetailPage({
           </select>
           <button className="btn-sm">Inscrever</button>
         </form>
+        </>)}
       </div>
 
       <div className="card">
@@ -106,6 +109,7 @@ export default async function ClassDetailPage({
                   </span>
                 </td>
                 <td style={{ display: "flex", gap: 6 }}>
+                  {isOwner && (<>
                   <form action={setAttendance}>
                     <input type="hidden" name="enrollment_id" value={e.id} />
                     <input type="hidden" name="class_id" value={id} />
@@ -118,13 +122,16 @@ export default async function ClassDetailPage({
                     <input type="hidden" name="status" value="falta" />
                     <button className="btn-sm btn-outline">Falta</button>
                   </form>
+                  </>)}
                 </td>
                 <td>
+                  {isOwner && (
                   <form action={adminCancel}>
                     <input type="hidden" name="class_id" value={id} />
                     <input type="hidden" name="client_id" value={e.clients?.id} />
                     <button className="btn-sm btn-danger">Cancelar</button>
                   </form>
+                  )}
                 </td>
               </tr>
             ))}

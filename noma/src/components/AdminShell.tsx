@@ -12,7 +12,7 @@ const NAV: NavItem[] = [
   { href: "/admin", label: "Início", icon: "home", exact: true },
   { href: "/admin/agenda", label: "Agenda", icon: "calendar" },
   { href: "/admin/clientes", label: "Clientes", icon: "users" },
-  { href: "/admin/financeiro", label: "Financeiro", icon: "wallet" },
+  { href: "/admin/financeiro", label: "Financeiro", icon: "wallet", ownerOnly: true },
   { href: "/admin/usuarios", label: "Usuários", icon: "shield", ownerOnly: true },
   { href: "/admin/cadastros", label: "Cadastros", icon: "tag", ownerOnly: true },
 ];

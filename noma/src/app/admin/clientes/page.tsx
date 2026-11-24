@@ -21,7 +21,8 @@ export default async function ClientesPage({
 }: {
   searchParams: Promise<{ ok?: string; erro?: string }>;
 }) {
-  await requireUser();
+  const me = await requireUser();
+  const isOwner = me.role === "dono";
   const { ok, erro } = await searchParams;
 
   const { data: clients } = await db()
@@ -42,6 +43,7 @@ export default async function ClientesPage({
       {ok && <div className="msg msg-ok">{ok}</div>}
       {erro && <div className="msg msg-err">{erro}</div>}
 
+      {isOwner && (
       <div className="card">
         <h2>Novo cliente</h2>
         <p className="muted">
@@ -79,6 +81,7 @@ export default async function ClientesPage({
           </div>
         </form>
       </div>
+      )}
 
       {clients?.map((c: any) => {
         const activeSub = (c.subscriptions ?? []).find((s: any) => s.status === "ativa");
@@ -105,6 +108,7 @@ export default async function ClientesPage({
                 </div>
               </div>
 
+              {isOwner && (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "start" }}>
                 <form action={updateClientStatus} className="inline">
                   <input type="hidden" name="id" value={c.id} />
@@ -151,6 +155,7 @@ export default async function ClientesPage({
                   </form>
                 )}
               </div>
+              )}
             </div>
           </div>
         );

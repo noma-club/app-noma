@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireOwner } from "@/lib/auth";
 import { enrollClient, cancelEnrollment } from "@/lib/enrollment";
 
 export async function createClass(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   const typeId = String(formData.get("class_type_id"));
   const spaceId = String(formData.get("space_id"));
   const teacherId = String(formData.get("teacher_id"));
@@ -41,13 +41,13 @@ export async function createClass(formData: FormData) {
 }
 
 export async function deleteClass(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   await db().from("classes").delete().eq("id", String(formData.get("id")));
   revalidatePath("/admin/agenda");
 }
 
 export async function adminEnroll(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   await enrollClient(String(formData.get("class_id")), String(formData.get("client_id")), {
     byAdmin: true,
   });
@@ -55,7 +55,7 @@ export async function adminEnroll(formData: FormData) {
 }
 
 export async function adminCancel(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   await cancelEnrollment(String(formData.get("class_id")), String(formData.get("client_id")), {
     byAdmin: true,
   });
@@ -64,7 +64,7 @@ export async function adminCancel(formData: FormData) {
 
 /** Chamada: professor marca presença/falta. */
 export async function setAttendance(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   const id = String(formData.get("enrollment_id"));
   const status = String(formData.get("status")); // presente | falta
   if (!["presente", "falta", "inscrito"].includes(status)) return;

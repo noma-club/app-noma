@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireOwner } from "@/lib/auth";
 import { check } from "@/lib/dbwrite";
 
 export async function createClient(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
   check(
@@ -24,7 +24,7 @@ export async function createClient(formData: FormData) {
 }
 
 export async function updateClientStatus(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   const id = String(formData.get("id"));
   const status = String(formData.get("status"));
   await db().from("clients").update({ status }).eq("id", id);
@@ -33,7 +33,7 @@ export async function updateClientStatus(formData: FormData) {
 
 /** Fechar plano: cliente vira FIXO e ganha assinatura com vencimento mensal. */
 export async function createSubscription(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   const clientId = String(formData.get("client_id"));
   const planId = String(formData.get("plan_id"));
   const startDate = String(formData.get("start_date"));
@@ -67,7 +67,7 @@ export async function createSubscription(formData: FormData) {
 
 /** Registra pagamento da mensalidade e empurra o vencimento 1 mês. */
 export async function registerSubscriptionPayment(formData: FormData) {
-  await requireUser();
+  await requireOwner();
   const subId = String(formData.get("subscription_id"));
   const method = String(formData.get("method"));
   const { data: sub } = await db()
