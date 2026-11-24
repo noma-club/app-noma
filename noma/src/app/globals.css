@@ -533,3 +533,19 @@ button:active, .btn:active { transform: translateY(1px); }
   .card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
   .container { max-width: 100%; }
 }
+
+/* ---------- Formulários com atualização instantânea (ActionForm) ---------- */
+.af-fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.af-fieldset[disabled] { opacity: 0.55; cursor: progress; }
+.af-form { margin: 0; }
+
+/* Campos auxiliares da tela de Cadastros */
+.grow-1 { flex: 1 1 160px; }
+.w-num { flex: 0 0 110px; }
+.inp-num { width: 78px; flex: 0 0 78px; }
+.af-fieldset.row > .field { margin-bottom: 0; }
+
+/* Linha / chip de item desativado */
+tr.is-off td { opacity: 0.5; }
+.chip.is-off { background: transparent; border: 1px dashed var(--line-2); color: var(--muted); }
+.chip.is-off button { color: var(--green); }

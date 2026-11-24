@@ -3,18 +3,23 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { check } from "@/lib/dbwrite";
 
 export async function createClient(formData: FormData) {
   await requireUser();
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
-  await db().from("clients").insert({
-    name,
-    birth_date: String(formData.get("birth_date") || "") || null,
-    cpf: String(formData.get("cpf") || "") || null,
-    phone: String(formData.get("phone") || "") || null,
-    status: String(formData.get("status") || "visitante"),
-  });
+  check(
+    await db().from("clients").insert({
+      name,
+      birth_date: String(formData.get("birth_date") || "") || null,
+      cpf: String(formData.get("cpf") || "") || null,
+      phone: String(formData.get("phone") || "") || null,
+      status: String(formData.get("status") || "visitante"),
+    }),
+    "/admin/clientes",
+    "Criar cliente"
+  );
   revalidatePath("/admin/clientes");
 }
 

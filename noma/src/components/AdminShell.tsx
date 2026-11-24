@@ -14,10 +14,11 @@ const NAV: NavItem[] = [
   { href: "/admin/clientes", label: "Clientes", icon: "users" },
   { href: "/admin/financeiro", label: "Financeiro", icon: "wallet" },
   { href: "/admin/usuarios", label: "Usuários", icon: "shield", ownerOnly: true },
+  { href: "/admin/cadastros", label: "Cadastros", icon: "tag", ownerOnly: true },
 ];
 
 type IconName =
-  | "home" | "calendar" | "users" | "wallet" | "shield"
+  | "home" | "calendar" | "users" | "wallet" | "shield" | "tag"
   | "menu" | "chevron-left" | "chevron-right" | "logout";
 
 function Icon({ name }: { name: IconName }) {
@@ -27,6 +28,7 @@ function Icon({ name }: { name: IconName }) {
     users: <><circle cx="9" cy="8" r="3" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.8M20.5 20a5 5 0 0 0-4-4.9" /></>,
     wallet: <><rect x="3" y="6" width="18" height="13" rx="2.5" /><path d="M3 10h18M16.5 14h1.5" /></>,
     shield: <path d="M12 3.5 19 6v5c0 4.5-3 7.8-7 9.5-4-1.7-7-5-7-9.5V6z" />,
+    tag: <><path d="M3 11.5V4.5a1.5 1.5 0 0 1 1.5-1.5h7L21 12.5 12.5 21z" /><circle cx="7.5" cy="7.5" r="1.4" /></>,
     menu: <path d="M4 7h16M4 12h16M4 17h16" />,
     "chevron-left": <path d="M15 6l-6 6 6 6" />,
     "chevron-right": <path d="M9 6l6 6-6 6" />,

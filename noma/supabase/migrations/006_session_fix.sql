@@ -40,3 +40,7 @@ $$;
 -- 3) Permite que o app chame as funções de autenticação
 grant execute on function get_app_user(uuid)              to anon, authenticated, service_role;
 grant execute on function verify_app_user(text, text)     to anon, authenticated, service_role;
+grant execute on function create_app_user(text, text, text, text)
+                                                          to anon, authenticated, service_role;
+grant execute on function set_app_user_password(uuid, text)
+                                                          to anon, authenticated, service_role;

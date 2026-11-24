@@ -16,8 +16,13 @@ const STATUS_LABEL: Record<string, string> = {
   fixo: "Fixo",
 };
 
-export default async function ClientesPage() {
+export default async function ClientesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ok?: string; erro?: string }>;
+}) {
   await requireUser();
+  const { ok, erro } = await searchParams;
 
   const { data: clients } = await db()
     .from("clients")
@@ -34,6 +39,9 @@ export default async function ClientesPage() {
 
   return (
     <>
+      {ok && <div className="msg msg-ok">{ok}</div>}
+      {erro && <div className="msg msg-err">{erro}</div>}
+
       <div className="card">
         <h2>Novo cliente</h2>
         <p className="muted">
