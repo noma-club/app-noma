@@ -111,11 +111,11 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   const userId = await readSessionUserId(jar.get(COOKIE)?.value);
   if (!userId) return null;
 
-  const { data: profile, error } = await db()
-    .from("profiles")
-    .select("name, role, active, username")
-    .eq("id", userId)
-    .maybeSingle();
+  // Usa RPC SECURITY DEFINER (igual ao login). Uma leitura comum em
+  // profiles fica sujeita a RLS e devolvia 0 linhas, derrubando a
+  // sessão logo após o login — ver migration 006_session_fix.sql.
+  const { data, error } = await db().rpc("get_app_user", { p_id: userId });
+  const profile = Array.isArray(data) ? data[0] : data;
 
   if (error || !profile || profile.active === false) return null;
 
