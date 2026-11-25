@@ -89,3 +89,51 @@ export async function rotateClientToken(formData: FormData) {
   revalidatePath("/admin/usuarios");
   back("Novo link gerado — o link antigo deixou de funcionar.");
 }
+
+/**
+ * Exclui definitivamente um professor/dono.
+ * Observação: `classes.teacher_id` referencia `profiles`, então um
+ * usuário que já tem aulas não pode ser apagado sem apagar o histórico.
+ * Nesse caso orientamos a desativar, que preserva os registros.
+ */
+export async function deleteUser(formData: FormData) {
+  const me = await requireOwner();
+  const id = String(formData.get("id"));
+
+  if (id === me.id) back("Você não pode excluir a si mesmo.", false);
+
+  // Dono não pode ficar sem ninguém: impede apagar o último dono ativo.
+  const { data: target } = await db()
+    .from("profiles")
+    .select("role, name")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (target?.role === "dono") {
+    const { count } = await db()
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "dono")
+      .eq("active", true);
+    if ((count ?? 0) <= 1) back("Este é o último dono ativo — não dá para excluí-lo.", false);
+  }
+
+  // Bloqueia se o professor já tem aulas lançadas (preserva histórico).
+  const { count: classCount } = await db()
+    .from("classes")
+    .select("id", { count: "exact", head: true })
+    .eq("teacher_id", id);
+
+  if ((classCount ?? 0) > 0) {
+    back(
+      `"${target?.name ?? "Usuário"}" tem ${classCount} aula(s) na agenda e não pode ser excluído sem apagar esse histórico. Use "Desativar" — ele perde o acesso e os registros ficam preservados.`,
+      false
+    );
+  }
+
+  const { error } = await db().from("profiles").delete().eq("id", id);
+  if (error) back(`Erro ao excluir: ${error.message}`, false);
+
+  revalidatePath("/admin/usuarios");
+  back(`"${target?.name ?? "Usuário"}" foi excluído.`);
+}

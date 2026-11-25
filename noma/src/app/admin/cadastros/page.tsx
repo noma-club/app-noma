@@ -12,6 +12,9 @@ import {
   toggleIncomeCategory,
   createExpenseCategory,
   toggleExpenseCategory,
+  createPlan,
+  updatePlan,
+  togglePlan,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +22,7 @@ export const dynamic = "force-dynamic";
 type Row = { id: string; name: string; active: boolean };
 type TypeRow = Row & { max_students: number };
 type SpaceRow = Row & { capacity: number };
+type PlanRow = Row & { duration_months: number; classes_per_week: number; monthly_price: number };
 
 export default async function CadastrosPage({
   searchParams,
@@ -28,10 +32,14 @@ export default async function CadastrosPage({
   await requireOwner();
   const { ok, erro } = await searchParams;
 
-  const [{ data: types }, { data: spaces }, { data: incomeCats }, { data: expenseCats }] =
+  const [{ data: types }, { data: spaces }, { data: plans }, { data: incomeCats }, { data: expenseCats }] =
     await Promise.all([
       db().from("class_types").select("id, name, max_students, active").order("name"),
       db().from("spaces").select("id, name, capacity, active").order("name"),
+      db()
+        .from("plans")
+        .select("id, name, duration_months, classes_per_week, monthly_price, active")
+        .order("name"),
       db().from("income_categories").select("id, name, active").order("name"),
       db().from("expense_categories").select("id, name, active").order("name"),
     ]);
@@ -175,6 +183,87 @@ export default async function CadastrosPage({
           </div>
         </section>
       </div>
+
+      {/* ================= Planos ================= */}
+      <section className="card mt">
+        <h2>Planos</h2>
+        <p className="muted">
+          Usados em "Fechar plano" na ficha do cliente. A duração não muda depois
+          de criado (assinaturas já emitidas dependem dela).
+        </p>
+
+        <ActionForm action={createPlan} className="row mt">
+          <div className="field grow-1">
+            <label>Nome do plano</label>
+            <input name="name" required placeholder="Ex.: Mensal 2x/semana" />
+          </div>
+          <div className="field w-num">
+            <label>Duração</label>
+            <select name="duration_months" defaultValue="1">
+              <option value="1">Mensal</option>
+              <option value="3">Trimestral</option>
+              <option value="6">Semestral</option>
+            </select>
+          </div>
+          <div className="field w-num">
+            <label>Aulas/semana</label>
+            <input name="classes_per_week" type="number" min={1} defaultValue={2} required />
+          </div>
+          <div className="field w-num">
+            <label>Valor mensal</label>
+            <input name="monthly_price" type="number" min={1} step="0.01" placeholder="380.00" required />
+          </div>
+          <button type="submit" className="btn-sm">Adicionar</button>
+        </ActionForm>
+
+        <div className="table-wrap mt">
+          <table>
+            <thead>
+              <tr>
+                <th colSpan={2}>Plano e valor mensal</th>
+                <th className="num">Aulas/sem.</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {(plans ?? []).map((pl: PlanRow) => (
+                <tr key={pl.id} className={pl.active ? undefined : "is-off"}>
+                  <td colSpan={2}>
+                    <ActionForm action={updatePlan} className="row gap-sm" reset={false}>
+                      <input type="hidden" name="id" value={pl.id} />
+                      <input name="name" defaultValue={pl.name} required aria-label="Nome do plano" />
+                      <input
+                        name="monthly_price"
+                        type="number"
+                        min={1}
+                        step="0.01"
+                        defaultValue={Number(pl.monthly_price)}
+                        required
+                        aria-label="Valor mensal"
+                        className="inp-num"
+                      />
+                      <button type="submit" className="btn-sm btn-outline">Salvar</button>
+                    </ActionForm>
+                  </td>
+                  <td className="num">{pl.classes_per_week}x</td>
+                  <td className="num">
+                    <ActionForm action={togglePlan} reset={false}>
+                      <input type="hidden" name="id" value={pl.id} />
+                      <input type="hidden" name="active" value={pl.active ? "0" : "1"} />
+                      <button type="submit" className="btn-sm btn-ghost">
+                        {pl.active ? "Desativar" : "Reativar"}
+                      </button>
+                    </ActionForm>
+                  </td>
+                </tr>
+              ))}
+              {(plans ?? []).length === 0 && (
+                <tr><td colSpan={4} className="muted">Nenhum plano cadastrado.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <div className="grid grid-2 mt">
         <CategoryBlock

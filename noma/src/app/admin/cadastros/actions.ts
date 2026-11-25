@@ -10,6 +10,7 @@ function revalidateAll() {
   revalidatePath("/admin/cadastros");
   revalidatePath("/admin/agenda");
   revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/clientes");
   revalidatePath("/admin");
 }
 
@@ -139,5 +140,59 @@ export async function toggleExpenseCategory(formData: FormData) {
     .from("expense_categories")
     .update({ active: formData.get("active") === "1" })
     .eq("id", id), BACK, "Alterar status");
+  revalidateAll();
+}
+
+/* ===================== Planos (plans) ===================== */
+
+function toMoney(v: FormDataEntryValue | null): number {
+  const n = Number(String(v ?? "").replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
+}
+
+export async function createPlan(formData: FormData) {
+  await requireOwner();
+  const name = clean(formData.get("name"));
+  const duration_months = toInt(formData.get("duration_months"), 1);
+  const classes_per_week = toInt(formData.get("classes_per_week"), 1);
+  const monthly_price = toMoney(formData.get("monthly_price"));
+  if (!name || monthly_price <= 0) return;
+  check(
+    await db().from("plans").insert({
+      name,
+      duration_months,
+      classes_per_week,
+      monthly_price,
+      active: true,
+    }),
+    BACK,
+    "Criar plano"
+  );
+  revalidateAll();
+}
+
+export async function updatePlan(formData: FormData) {
+  await requireOwner();
+  const id = clean(formData.get("id"));
+  const name = clean(formData.get("name"));
+  const monthly_price = toMoney(formData.get("monthly_price"));
+  if (!id || !name || monthly_price <= 0) return;
+  check(
+    await db().from("plans").update({ name, monthly_price }).eq("id", id),
+    BACK,
+    "Salvar plano"
+  );
+  revalidateAll();
+}
+
+export async function togglePlan(formData: FormData) {
+  await requireOwner();
+  const id = clean(formData.get("id"));
+  if (!id) return;
+  check(
+    await db().from("plans").update({ active: formData.get("active") === "1" }).eq("id", id),
+    BACK,
+    "Alterar status do plano"
+  );
   revalidateAll();
 }

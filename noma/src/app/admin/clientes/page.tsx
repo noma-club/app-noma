@@ -1,5 +1,6 @@
 import { db, fmtDate, brl } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import CopyLink from "@/components/CopyLink";
 import {
   createClient,
   updateClientStatus,
@@ -103,8 +104,9 @@ export default async function ClientesPage({
                     <b>{fmtDate(activeSub.next_due_date)}</b>
                   </div>
                 )}
-                <div className="muted">
-                  Link do aluno: <code>/aluno/{c.access_token}</code>
+                <div className="muted" style={{ marginTop: 6 }}>
+                  Link do aluno:
+                  <CopyLink token={c.access_token} />
                 </div>
               </div>
 

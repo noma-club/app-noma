@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { requireOwner } from "@/lib/auth";
+import CopyLink from "@/components/CopyLink";
 import { PASSWORD_HINT } from "@/lib/password";
 import ConfirmButton from "@/components/ConfirmButton";
 import {
@@ -9,6 +10,7 @@ import {
   resetPassword,
   deleteClientUser,
   rotateClientToken,
+  deleteUser,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -132,6 +134,18 @@ export default async function UsuariosPage({
                           <button type="submit" className="btn-sm">Reativar</button>
                         )}
                       </form>
+
+                      {p.id !== me.id && (
+                        <form action={deleteUser}>
+                          <input type="hidden" name="id" value={p.id} />
+                          <ConfirmButton
+                            message={`Excluir ${p.name} definitivamente? Esta ação não pode ser desfeita. Se ele já tem aulas na agenda, prefira "Desativar".`}
+                            className="btn-sm btn-ghost"
+                          >
+                            Excluir
+                          </ConfirmButton>
+                        </form>
+                      )}
                       <form action={resetPassword} className="inline">
                         <input type="hidden" name="id" value={p.id} />
                         <input
@@ -180,7 +194,7 @@ export default async function UsuariosPage({
                     {c.name} <span className={`badge badge-${c.status}`}>{c.status}</span>
                   </td>
                   <td>
-                    <code className="mono">/aluno/{c.access_token}</code>
+                    <CopyLink token={c.access_token} />
                   </td>
                   <td>
                     <div className="row gap-sm">

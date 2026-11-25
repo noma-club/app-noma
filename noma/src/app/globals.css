@@ -549,3 +549,12 @@ button:active, .btn:active { transform: translateY(1px); }
 tr.is-off td { opacity: 0.5; }
 .chip.is-off { background: transparent; border: 1px dashed var(--line-2); color: var(--muted); }
 .chip.is-off button { color: var(--green); }
+
+/* ---------- Link do aluno com botão copiar ---------- */
+.copy-link { display: flex; gap: 6px; align-items: center; max-width: 100%; }
+.copy-link input {
+  flex: 1 1 auto; min-width: 0;
+  font-size: 12.5px; padding: 7px 9px;
+  background: var(--bg-2); color: var(--wine);
+}
+.copy-link button { white-space: nowrap; }
